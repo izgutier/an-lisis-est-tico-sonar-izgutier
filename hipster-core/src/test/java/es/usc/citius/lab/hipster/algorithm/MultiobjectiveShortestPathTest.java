@@ -83,8 +83,7 @@ public class MultiobjectiveShortestPathTest {
         }
     }
     @Test
-    public void test(){
-        // Create a multiobjective graph
+    public void test() {
         final HipsterDirectedGraph<String, Cost> graph =
                 GraphBuilder.create()
                         .connect("v1").to("v2").withEdge(new Cost(7d, 1d))
@@ -97,33 +96,34 @@ public class MultiobjectiveShortestPathTest {
                         .connect("v4").to("v6").withEdge(new Cost(2d, 2d))
                         .buildDirectedGraph();
 
-        // Since we use a special cost, we need to define a BinaryOperation<Cost>
-        // that provides the required elements to work with our special cost type.
-        // These elements are: a BinaryFunction<Cost> that defines how to compute
-        // a new cost from two costs: C x C -> C, the identity element I of our
-        // cost (C + I = C, I + C = C), and the maximum value.
-
-        // Cost a + Cost b is defined as a new cost a.c1+b.c1, a.c2+b.c2
         BinaryFunction<Cost> f = new BinaryFunction<Cost>() {
             @Override
             public Cost apply(Cost a, Cost b) {
-                Cost c = new Cost(a.c1 + b.c1, a.c2 + b.c2);
-                return c;
+                return new Cost(a.c1 + b.c1, a.c2 + b.c2);
             }
         };
-        // The identity cost identity satisfy:
-        // f.apply(c, identity).equals(c)
-        // f.apply(identity, c).equals(c)
+
         Cost identity = new Cost(0d, 0d);
-
-        // Maximum value of our costs
         Cost max = new Cost(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-
-        // Create our custom binary operation:
         BinaryOperation<Cost> bf = new BinaryOperation<Cost>(f, identity, max);
 
-        System.out.println(Hipster.createMultiobjectiveLS(GraphSearchProblem.startingFrom("v1").in(graph).useGenericCosts(bf).build()).search("v6"));
+    
+        var result = Hipster.createMultiobjectiveLS(
+                GraphSearchProblem.startingFrom("v1")
+                        .in(graph)
+                        .useGenericCosts(bf)
+                        .build()
+        ).search("v6");
 
-        // TODO; Add solution verification
+        org.junit.Assert.assertNotNull("El resultado de la búsqueda no debería ser nulo", result);
+        
+        org.junit.Assert.assertFalse("Debería haber encontrado al menos un camino óptimo", 
+                result.getOptimalPaths().isEmpty());
+
+        int solucionesEsperadas = 2;
+        org.junit.Assert.assertEquals("El número de soluciones no dominadas (Pareto) debería ser 2", 
+                solucionesEsperadas, result.getOptimalPaths().size());
+
+        System.out.println("Caminos óptimos encontrados: " + result.getOptimalPaths());
     }
 }
