@@ -213,9 +213,6 @@ public class ADStarForward<A,S,C extends Comparable<C>, N extends es.usc.citius.
 
         @Override
         public N next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
             //First node in OPEN retrieved, not removed
             N current = takePromising();
             S state = current.state();
